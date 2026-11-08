@@ -21,7 +21,18 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { signOut, useSession } from "@/lib/auth-client";
 
-const navLinks = [
+
+export function SiteNavbar() {
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
+
+  const pathname = usePathname();
+  const router = useRouter();
+
+  const { data: session, isPending } = useSession();
+  const user = session?.user;
+
+  const navLinks = [
   {
     label: "Browse Jobs",
     href: "/jobs",
@@ -37,17 +48,13 @@ const navLinks = [
     href: "/pricing",
     icon: CreditCard,
   },
+  {
+    label: "Dashboard",
+    href: `/dashboard/${session?.user?.role || 'seeker'}`,
+    icon: CreditCard,
+  },
 ];
 
-export function SiteNavbar() {
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [isSigningOut, setIsSigningOut] = useState(false);
-
-  const pathname = usePathname();
-  const router = useRouter();
-
-  const { data: session, isPending } = useSession();
-  const user = session?.user;
 
   const handleSignOut = async () => {
     try {
