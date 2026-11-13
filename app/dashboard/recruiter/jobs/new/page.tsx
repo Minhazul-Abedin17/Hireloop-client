@@ -1,8 +1,7 @@
+"use client"
 
-"use client";
-
-import { useState } from "react";
-import Link from "next/link";
+import { useState } from "react"
+import Link from "next/link"
 import {
   ArrowLeft,
   BriefcaseBusiness,
@@ -11,34 +10,87 @@ import {
   CalendarDays,
   DollarSign,
   FileText,
-  ListChecks,
-  Plus,
   Send,
   Loader2,
   Globe,
-} from "lucide-react";
+} from "lucide-react"
+import { createJob } from "@/lib/actions/jobs"
+import { toast } from "react-toastify"
+import { useRouter } from "next/navigation"
+
 
 export default function NewPage() {
-  const [isPublishing, setIsPublishing] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false)
+  const [message, setMessage] = useState("")
+  const [isSuccess, setIsSuccess] = useState(false)
+  const router = useRouter()
 
   const handlePublish = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+    event.preventDefault()
 
-    const formData = new FormData(event.currentTarget);
+    const form = event.currentTarget
+    const formData = new FormData(form)
+    
+    setIsPublishing(true)
+    setMessage("")
+    setIsSuccess(false)
+    
+    const jobData = {
+      jobTitle: formData.get("jobTitle")?.toString().trim(),
+      companyName: formData.get("companyName")?.toString().trim(),
+      category: formData.get("category"),
+      jobType: formData.get("jobType"),
+      location: formData.get("location")?.toString().trim(),
+      isRemote: formData.get("isRemote") === "true",
 
-    const jobData = Object.fromEntries(formData.entries());
+      minimumSalary: formData.get("minimumSalary")
+        ? Number(formData.get("minimumSalary"))
+        : null,
 
-    console.log("New Job Details:", jobData);
+      maximumSalary: formData.get("maximumSalary")
+        ? Number(formData.get("maximumSalary"))
+        : null,
 
-    // এখানে পরবর্তীতে তোমার Backend API connect করবে।
-  };
+      salaryFrequency: formData.get("salaryFrequency"),
+      deadline: formData.get("deadline"),
+      description: formData.get("description")?.toString().trim(),
+      responsibilities: formData.get("responsibilities")?.toString().trim(),
+      requirements: formData.get("requirements")?.toString().trim(),
+    }
+
+    createJob(jobData)
+      .then((result) => {
+        if (result.success) {
+          setIsSuccess(true)
+          toast.success("Job published successfully!")
+          router.push('/dashboard/recruiter/jobs')
+          form.reset()
+        } else {
+          setIsSuccess(false)
+          toast.error(result.message || "Failed to publish job.")
+        }
+      })
+      .catch((error: Error) => {
+        setIsSuccess(false)
+        toast.error(error.message || "Something went wrong.")
+      })
+      .finally(() => {
+        setIsPublishing(false)
+      })
+  }
+
+  const inputClass =
+    "h-11 w-full rounded-lg border border-white/10 bg-[#111116] px-4 text-sm text-white outline-none placeholder:text-neutral-600 focus:border-violet-500"
+
+  const labelClass = "text-sm font-medium text-neutral-300"
+
+  const sectionClass =
+    "rounded-xl border border-white/10 bg-neutral-900/70 p-5 sm:p-7"
 
   return (
     <div className="mx-auto max-w-6xl space-y-7 pb-10">
-
       {/* Top Navigation */}
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-
         <div>
           <div className="mb-2 flex items-center gap-2 text-sm">
             <Link
@@ -50,9 +102,7 @@ export default function NewPage() {
 
             <span className="text-neutral-600">/</span>
 
-            <span className="font-medium text-white">
-              Create New Listing
-            </span>
+            <span className="font-medium text-white">Create New Listing</span>
           </div>
 
           <p className="text-xs text-neutral-500">
@@ -83,28 +133,34 @@ export default function NewPage() {
         </button>
       </div>
 
-      {/* Page Heading */}
+      {/* Heading */}
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
           Create New Job Listing
         </h1>
 
         <p className="mt-2 max-w-2xl text-sm leading-6 text-neutral-400">
-          Fill in the position specifications to attract qualified talent
-          across our network.
+          Fill in the position specifications to attract qualified candidates.
         </p>
       </div>
 
+      {/* Status Message */}
+      {message && (
+        <div
+          className={`rounded-lg border p-4 text-sm ${
+            isSuccess
+              ? "border-green-500/30 bg-green-500/10 text-green-400"
+              : "border-red-500/30 bg-red-500/10 text-red-400"
+          }`}
+        >
+          {message}
+        </div>
+      )}
+
       {/* Job Form */}
-      <form
-        id="create-job-form"
-        onSubmit={handlePublish}
-        className="space-y-6"
-      >
-
-        {/* 01. Basic Information */}
-        <section className="rounded-xl border border-white/10 bg-neutral-900/70 p-5 sm:p-7">
-
+      <form id="create-job-form" onSubmit={handlePublish} className="space-y-6">
+        {/* 01 Basic Information */}
+        <section className={sectionClass}>
           <div className="mb-6 flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-violet-500/10 text-violet-400">
               <BriefcaseBusiness size={20} />
@@ -121,44 +177,40 @@ export default function NewPage() {
           </div>
 
           <div className="grid gap-5 md:grid-cols-2">
-
-            {/* Job Title */}
             <div className="space-y-2 md:col-span-2">
-              <label className="text-sm font-medium text-neutral-300">
+              <label className={labelClass}>
                 Job Title <span className="text-red-400">*</span>
               </label>
 
               <input
-                type="text"
                 name="jobTitle"
+                type="text"
                 required
-                placeholder="e.g. Frontend Developer, Backend Developer"
-                className="h-11 w-full rounded-lg border border-white/10 bg-[#111116] px-4 text-sm text-white outline-none transition placeholder:text-neutral-600 focus:border-violet-500"
+                placeholder="e.g. Frontend Developer"
+                className={inputClass}
               />
             </div>
 
-            {/* Company Name */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-neutral-300">
+              <label className={labelClass}>
                 Company Name <span className="text-red-400">*</span>
               </label>
 
               <div className="relative">
-                <Building2 className="absolute left-3 top-3 h-4 w-4 text-neutral-500" />
+                <Building2 className="absolute top-3 left-3 h-4 w-4 text-neutral-500" />
 
                 <input
-                  type="text"
                   name="companyName"
+                  type="text"
                   required
                   placeholder="Enter company name"
-                  className="h-11 w-full rounded-lg border border-white/10 bg-[#111116] pl-10 pr-4 text-sm text-white outline-none transition placeholder:text-neutral-600 focus:border-violet-500"
+                  className={`${inputClass} pl-10`}
                 />
               </div>
             </div>
 
-            {/* Job Category */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-neutral-300">
+              <label className={labelClass}>
                 Job Category <span className="text-red-400">*</span>
               </label>
 
@@ -166,15 +218,19 @@ export default function NewPage() {
                 name="category"
                 required
                 defaultValue=""
-                className="h-11 w-full rounded-lg border border-white/10 bg-[#111116] px-4 text-sm text-neutral-300 outline-none focus:border-violet-500"
+                className={inputClass}
               >
                 <option value="" disabled>
                   Select a category
                 </option>
-                <option value="engineering-tech">Engineering & Technology</option>
+                <option value="engineering-tech">
+                  Engineering & Technology
+                </option>
                 <option value="design-creative">Design & Creative</option>
                 <option value="marketing">Marketing</option>
-                <option value="business-management">Business & Management</option>
+                <option value="business-management">
+                  Business & Management
+                </option>
                 <option value="finance-accounting">Finance & Accounting</option>
                 <option value="sales">Sales</option>
                 <option value="customer-support">Customer Support</option>
@@ -184,42 +240,36 @@ export default function NewPage() {
               </select>
             </div>
 
-            {/* Job Type */}
             <div className="space-y-3 md:col-span-2">
-              <label className="text-sm font-medium text-neutral-300">
+              <label className={labelClass}>
                 Job Type <span className="text-red-400">*</span>
               </label>
 
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                {[
-                  "Full-time",
-                  "Part-time",
-                  "Contract",
-                  "Internship",
-                ].map((type) => (
-                  <label key={type} className="cursor-pointer">
-                    <input
-                      type="radio"
-                      name="jobType"
-                      value={type}
-                      required
-                      className="peer sr-only"
-                    />
+                {["Full-time", "Part-time", "Contract", "Internship"].map(
+                  (type) => (
+                    <label key={type} className="cursor-pointer">
+                      <input
+                        type="radio"
+                        name="jobType"
+                        value={type}
+                        required
+                        className="peer sr-only"
+                      />
 
-                    <div className="flex min-h-12 items-center justify-center rounded-lg border border-white/10 bg-[#111116] px-3 text-center text-sm text-neutral-400 transition hover:border-violet-500/50 peer-checked:border-violet-500 peer-checked:bg-violet-500/10 peer-checked:font-semibold peer-checked:text-violet-400">
-                      {type}
-                    </div>
-                  </label>
-                ))}
+                      <div className="flex min-h-12 items-center justify-center rounded-lg border border-white/10 bg-[#111116] px-3 text-center text-sm text-neutral-400 transition peer-checked:border-violet-500 peer-checked:bg-violet-500/10 peer-checked:font-semibold peer-checked:text-violet-400 hover:border-violet-500/50">
+                        {type}
+                      </div>
+                    </label>
+                  )
+                )}
               </div>
             </div>
-
           </div>
         </section>
 
-        {/* 02. Location & Work Mode */}
-        <section className="rounded-xl border border-white/10 bg-neutral-900/70 p-5 sm:p-7">
-
+        {/* 02 Location */}
+        <section className={sectionClass}>
           <div className="mb-6 flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-violet-500/10 text-violet-400">
               <MapPin size={20} />
@@ -236,27 +286,24 @@ export default function NewPage() {
           </div>
 
           <div className="space-y-5">
-
-            {/* Location */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-neutral-300">
+              <label className={labelClass}>
                 Job Location <span className="text-red-400">*</span>
               </label>
 
               <div className="relative">
-                <MapPin className="absolute left-3 top-3 h-4 w-4 text-neutral-500" />
+                <MapPin className="absolute top-3 left-3 h-4 w-4 text-neutral-500" />
 
                 <input
-                  type="text"
                   name="location"
+                  type="text"
                   required
                   placeholder="e.g. Dhaka, Bangladesh"
-                  className="h-11 w-full rounded-lg border border-white/10 bg-[#111116] pl-10 pr-4 text-sm text-white outline-none placeholder:text-neutral-600 focus:border-violet-500"
+                  className={`${inputClass} pl-10`}
                 />
               </div>
             </div>
 
-            {/* Remote Work */}
             <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-white/10 bg-[#111116] p-4">
               <input
                 type="checkbox"
@@ -272,17 +319,16 @@ export default function NewPage() {
                 </div>
 
                 <p className="mt-1 text-xs leading-5 text-neutral-500">
-                  Allow candidates to work remotely from their preferred location.
+                  Allow candidates to work remotely from their preferred
+                  location.
                 </p>
               </div>
             </label>
-
           </div>
         </section>
 
-        {/* 03. Compensation & Timeline */}
-        <section className="rounded-xl border border-white/10 bg-neutral-900/70 p-5 sm:p-7">
-
+        {/* 03 Salary and Deadline */}
+        <section className={sectionClass}>
           <div className="mb-6 flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-violet-500/10 text-violet-400">
               <DollarSign size={20} />
@@ -299,47 +345,37 @@ export default function NewPage() {
           </div>
 
           <div className="grid gap-5 md:grid-cols-2">
-
-            {/* Minimum Salary */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-neutral-300">
-                Minimum Salary
-              </label>
+              <label className={labelClass}>Minimum Salary</label>
 
               <input
-                type="number"
                 name="minimumSalary"
+                type="number"
                 min="0"
                 placeholder="e.g. 30000"
-                className="h-11 w-full rounded-lg border border-white/10 bg-[#111116] px-4 text-sm text-white outline-none placeholder:text-neutral-600 focus:border-violet-500"
+                className={inputClass}
               />
             </div>
 
-            {/* Maximum Salary */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-neutral-300">
-                Maximum Salary
-              </label>
+              <label className={labelClass}>Maximum Salary</label>
 
               <input
-                type="number"
                 name="maximumSalary"
+                type="number"
                 min="0"
                 placeholder="e.g. 60000"
-                className="h-11 w-full rounded-lg border border-white/10 bg-[#111116] px-4 text-sm text-white outline-none placeholder:text-neutral-600 focus:border-violet-500"
+                className={inputClass}
               />
             </div>
 
-            {/* Salary Frequency */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-neutral-300">
-                Salary Frequency
-              </label>
+              <label className={labelClass}>Salary Frequency</label>
 
               <select
                 name="salaryFrequency"
                 defaultValue="monthly"
-                className="h-11 w-full rounded-lg border border-white/10 bg-[#111116] px-4 text-sm text-neutral-300 outline-none focus:border-violet-500"
+                className={inputClass}
               >
                 <option value="hourly">Per Hour</option>
                 <option value="daily">Per Day</option>
@@ -350,25 +386,23 @@ export default function NewPage() {
               </select>
             </div>
 
-            {/* Deadline */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-neutral-300">
+              <label className={labelClass}>
                 Application Deadline <span className="text-red-400">*</span>
               </label>
 
               <div className="relative">
-                <CalendarDays className="absolute left-3 top-3 h-4 w-4 text-neutral-500" />
+                <CalendarDays className="absolute top-3 left-3 h-4 w-4 text-neutral-500" />
 
                 <input
-                  type="date"
                   name="deadline"
+                  type="date"
                   required
-                  min={new Date().toISOString().split("T")[0]}
-                  className="h-11 w-full rounded-lg border border-white/10 bg-[#111116] pl-10 pr-3 text-sm text-neutral-300 outline-none focus:border-violet-500"
+                  min={new Date().toLocaleDateString("en-CA")}
+                  className={`${inputClass} pl-10`}
                 />
               </div>
             </div>
-
           </div>
 
           <p className="mt-4 text-xs text-neutral-500">
@@ -376,18 +410,15 @@ export default function NewPage() {
           </p>
         </section>
 
-        {/* 04. Job Description */}
-        <section className="rounded-xl border border-white/10 bg-neutral-900/70 p-5 sm:p-7">
-
+        {/* 04 Job Description */}
+        <section className={sectionClass}>
           <div className="mb-6 flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-violet-500/10 text-violet-400">
               <FileText size={20} />
             </div>
 
             <div>
-              <h2 className="font-semibold text-white">
-                04. Job Description
-              </h2>
+              <h2 className="font-semibold text-white">04. Job Description</h2>
               <p className="mt-1 text-xs text-neutral-500">
                 Tell candidates about the position and what they will do.
               </p>
@@ -395,10 +426,8 @@ export default function NewPage() {
           </div>
 
           <div className="space-y-5">
-
-            {/* Overview */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-neutral-300">
+              <label className={labelClass}>
                 Job Overview <span className="text-red-400">*</span>
               </label>
 
@@ -406,14 +435,13 @@ export default function NewPage() {
                 name="description"
                 required
                 rows={5}
-                placeholder="Describe the role, your company, and what makes this opportunity exciting..."
+                placeholder="Describe the role, your company, and this opportunity..."
                 className="w-full resize-y rounded-lg border border-white/10 bg-[#111116] px-4 py-3 text-sm leading-6 text-white outline-none placeholder:text-neutral-600 focus:border-violet-500"
               />
             </div>
 
-            {/* Responsibilities */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-neutral-300">
+              <label className={labelClass}>
                 Key Responsibilities <span className="text-red-400">*</span>
               </label>
 
@@ -421,32 +449,30 @@ export default function NewPage() {
                 name="responsibilities"
                 required
                 rows={5}
-                placeholder={"Describe the main responsibilities of this position...\nExample:\n• Build responsive and user-friendly interfaces.\n• Collaborate with designers and backend engineers.\n• Optimize application performance."}
+                placeholder="Describe the main responsibilities of this position..."
                 className="w-full resize-y rounded-lg border border-white/10 bg-[#111116] px-4 py-3 text-sm leading-6 text-white outline-none placeholder:text-neutral-600 focus:border-violet-500"
               />
             </div>
 
-            {/* Requirements */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-neutral-300">
-                Requirements & Qualifications <span className="text-red-400">*</span>
+              <label className={labelClass}>
+                Requirements & Qualifications{" "}
+                <span className="text-red-400">*</span>
               </label>
 
               <textarea
                 name="requirements"
                 required
                 rows={5}
-                placeholder={"List the skills, qualifications, and experience required...\nExample:\n• 3+ years of experience with React and TypeScript.\n• Strong understanding of DOM performance.\n• Experience working with product teams and UI/UX designers."}
+                placeholder="List the skills, qualifications, and experience required..."
                 className="w-full resize-y rounded-lg border border-white/10 bg-[#111116] px-4 py-3 text-sm leading-6 text-white outline-none placeholder:text-neutral-600 focus:border-violet-500"
               />
             </div>
-
           </div>
         </section>
 
         {/* Bottom Actions */}
         <div className="flex flex-col-reverse justify-between gap-3 border-t border-white/10 pt-6 sm:flex-row sm:items-center">
-
           <Link
             href="/dashboard/recruiter/jobs"
             className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-white/10 px-5 text-sm font-medium text-neutral-300 transition hover:bg-white/5 hover:text-white"
@@ -458,19 +484,17 @@ export default function NewPage() {
           <button
             type="submit"
             disabled={isPublishing}
-            // onClick={() => setIsPublishing(true)}
-            className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-violet-600 px-6 text-sm font-semibold text-white transition hover:bg-violet-700 disabled:opacity-60"
+            className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-violet-600 px-6 text-sm font-semibold text-white transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isPublishing ? (
               <Loader2 size={17} className="animate-spin" />
             ) : (
               <Send size={16} />
             )}
-            Publish Job
+            {isPublishing ? "Publishing..." : "Publish Job"}
           </button>
         </div>
-
       </form>
     </div>
-  );
+  )
 }

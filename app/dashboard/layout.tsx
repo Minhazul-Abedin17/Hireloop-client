@@ -4,6 +4,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { DashboardSidebar } from "../components/DashboardSIdebar";
+import { ToastContainer } from "react-toastify";
 
 
 
@@ -25,7 +26,7 @@ export default function DashboardLayout({
         <div className="p-4 sm:p-6 lg:p-8">
           {children}
         </div>
-
+    <ToastContainer />
       </main>
     </SidebarProvider>
   );
