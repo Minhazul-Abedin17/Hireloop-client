@@ -35,7 +35,7 @@ export function SiteNavbar() {
   const navLinks = [
   {
     label: "Browse Jobs",
-    href: "/jobs",
+    href: "/browse-jobs",
     icon: BriefcaseBusiness,
   },
   {

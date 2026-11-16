@@ -1,9 +1,9 @@
 
 const BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+  process.env.NEXT_PUBLIC_API_URL
 
-export const getJob = async () => {
-  const res = await fetch(`${BASE_URL}/jobs`, {
+export const getJob = async (query : string = '') => {
+  const res = await fetch(`${BASE_URL}/jobs${query}`, {
     cache: "no-store",
   });
 
