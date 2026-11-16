@@ -5,7 +5,11 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "@/lib/auth-client";
 import { ArrowUpRight, Loader2 } from "lucide-react";
-import { applyToAJob } from "@/lib/actions/application";
+import {
+  applyToAJob,
+  getApplicationsCount,
+} from "@/lib/actions/application";
+import { toast } from "react-toastify";
 
 export default function ApplyJobButton({
   jobId,
@@ -14,9 +18,7 @@ export default function ApplyJobButton({
 }) {
   const router = useRouter();
   const { data: session } = useSession();
-
   const [loading, setLoading] = useState(false);
-
   const handleApply = async () => {
     const user = session?.user;
 
@@ -28,30 +30,41 @@ export default function ApplyJobButton({
 
     // Check user role
     if (user.role !== "seeker") {
-      alert("Only job seekers can apply for jobs.");
+      toast.error("Only job seekers can apply for jobs.");
+      return;
+    }
+
+    if (!user.email) {
+      toast.error("Your email address is missing.");
       return;
     }
 
     try {
       setLoading(true);
+      // Check application count before applying
+      const countResult = await getApplicationsCount(user.id);
 
-      const application = {
-        jobId: jobId,
+      // Free application limit: 8
+      if (countResult.count >= 8) {
+        router.push("/payment");
+        return;
+      }
+
+      // Submit application
+      const result = await applyToAJob({
+        jobId,
         userId: user.id,
         email: user.email,
-      };
-
-      const result = await applyToAJob(application);
+      });
 
       if (result.insertedId) {
-        alert("Application submitted successfully!");
+        toast.success("Application submitted successfully!");
         router.push("/dashboard/seeker/applications");
       } else {
         alert(result.message || "Failed to submit application.");
       }
     } catch (error) {
-      console.error("Application Error:", error);
-      alert("Something went wrong. Please try again.");
+      toast.error("Application Error:");
     } finally {
       setLoading(false);
     }
