@@ -4,6 +4,9 @@ import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { cn } from "@/lib/utils";
 import { SiteNavbar } from "@/components/site-navbar";
+import FooterSection from "./components/FooterSection";
+
+
 
 const geist = Geist({subsets:['latin'],variable:'--font-sans'})
 
@@ -27,6 +30,7 @@ export default function RootLayout({
 
         <SiteNavbar/>
         <ThemeProvider>{children}</ThemeProvider>
+        <FooterSection/>
       </body>
     </html>
   )
